@@ -31,6 +31,7 @@ public final class SmppUtils {
     /**
      * See http://unicode.org/Public/MAPPINGS/ETSI/GSM0338.TXT
      */
+    @Deprecated
     public static final short[] ISO_GSM_0338 = {
         64,     163,    36,     165,    232,    233,    249,    236,
         242,    199,    10,     216,    248,    13,     197,    229,
@@ -53,6 +54,7 @@ public final class SmppUtils {
     /**
      * See http://unicode.org/Public/MAPPINGS/ETSI/GSM0338.TXT
      */
+    @Deprecated
     public static final short[][] ISO_GSM_0338_EXT = {
         {10, 12},   {20, 94},   {40, 123},  {41, 125},  {47, 92},
         {60, 91},   {61, 126},  {62, 93},   {64, 124},  {101, 164}
@@ -115,14 +117,13 @@ public final class SmppUtils {
         }
     }
 
+    @Deprecated
     public static Alphabet parseAlphabetFromDataCoding(byte dataCoding) {
         /* Both the 3.4 and 5.0 SMPP specs clearly state that 0x02 is
          * 'Octet-unspecified (8-bit)', but jsmpp doesn't account for this for
          * some reason.
          */
-        return dataCoding == 0x02
-            ? Alphabet.ALPHA_8_BIT
-            : Alphabet.valueOf((byte)(dataCoding & Alphabet.MASK_ALPHABET));
+         return Alphabet.parseDataCoding(dataCoding);
     }
 
     /**
@@ -132,6 +133,7 @@ public final class SmppUtils {
      *                 UTF-8 encoded text should not be passed to this method.
      * @return true if the characters can be represented in GSM 3.38
      */
+    @Deprecated
     public static boolean isGsm0338Encodeable(byte[] aMessage) {
     outer:
         for (int i = 0; i < aMessage.length; i++) {
@@ -160,7 +162,7 @@ public final class SmppUtils {
         dest.setDestAddrNpi(src.getDestAddrNpi());
         dest.setDestAddrTon(src.getDestAddrTon());
         dest.setEsmClass(src.getEsmClass());
-        dest.setOptionalParametes(src.getOptionalParametes());
+        dest.setOptionalParameters(src.getOptionalParameters());
         dest.setPriorityFlag(src.getPriorityFlag());
         dest.setProtocolId(src.getProtocolId());
         dest.setRegisteredDelivery(src.getRegisteredDelivery());
@@ -251,7 +253,7 @@ public final class SmppUtils {
         dest.setDestAddrNpi(src.getDestAddrNpi());
         dest.setDestAddrTon(src.getDestAddrTon());
         dest.setEsmClass(src.getEsmClass());
-        dest.setOptionalParametes(src.getOptionalParametes());
+        dest.setOptionalParameters(src.getOptionalParameters());
         dest.setRegisteredDelivery(src.getRegisteredDelivery());
         dest.setSequenceNumber(src.getSequenceNumber());
         dest.setServiceType(src.getServiceType());

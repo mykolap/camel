@@ -26,16 +26,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.impl.DefaultExchange;
-import org.jsmpp.bean.Alphabet;
-import org.jsmpp.bean.DataCoding;
-import org.jsmpp.bean.ESMClass;
-import org.jsmpp.bean.NumberingPlanIndicator;
-import org.jsmpp.bean.OptionalParameter;
+import org.jsmpp.bean.*;
 import org.jsmpp.bean.OptionalParameter.Tag;
-import org.jsmpp.bean.RegisteredDelivery;
-import org.jsmpp.bean.ReplaceIfPresentFlag;
-import org.jsmpp.bean.SMSCDeliveryReceipt;
-import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.session.SMPPSession;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -92,7 +84,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0),
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0),
                 aryEq("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890".getBytes())))
                 .andReturn("1");
 
@@ -122,12 +114,12 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
                 .andReturn("1");
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), eq(secondSM)))
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), eq(secondSM)))
                 .andReturn("2");
 
         replay(session);
@@ -156,12 +148,12 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
                 .andReturn("1");
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), eq(secondSM)))
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), eq(secondSM)))
                 .andReturn("2");
 
         replay(session);
@@ -189,7 +181,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
+                eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), aryEq(firstSM)))
                 .andReturn("1");
 
         replay(session);
@@ -223,7 +215,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("-300101003702200-"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
-                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), aryEq("short message body".getBytes())))
+                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), aryEq("short message body".getBytes())))
                 .andReturn("1");
 
         replay(session);
@@ -265,7 +257,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("-300101003702200-"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
-                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCoding.newInstance((byte) 0)), eq((byte) 0),
+                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCodings.newInstance((byte) 0)), eq((byte) 0),
                 aryEq("short message body".getBytes()), eq(new OptionalParameter.OctetString(Tag.SOURCE_SUBADDRESS, "1292")),
                 eq(new OptionalParameter.COctetString(Tag.ADDITIONAL_STATUS_INFO_TEXT.code(), "urgent")), eq(new OptionalParameter.Byte(Tag.DEST_ADDR_SUBUNIT, (byte) 4)),
                 eq(new OptionalParameter.Short(Tag.DEST_TELEMATICS_ID.code(), (short) 2)), eq(new OptionalParameter.Int(Tag.QOS_TIME_TO_LIVE, 3600000)),
@@ -319,7 +311,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("-300101003702200-"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
-                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCoding.newInstance((byte) 0)), eq((byte) 0),
+                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCodings.newInstance((byte) 0)), eq((byte) 0),
                 aryEq("short message body".getBytes()),
                 eq(new OptionalParameter.OctetString(Tag.SOURCE_SUBADDRESS, "1292")),
                 eq(new OptionalParameter.COctetString(Tag.ADDITIONAL_STATUS_INFO_TEXT.code(), "urgent")),
@@ -366,7 +358,7 @@ public class SmppSubmitSmCommandTest {
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("000003000000000R"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
-                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCoding.newInstance((byte) 0)), eq((byte) 0), aryEq("short message body".getBytes())))
+                eq(ReplaceIfPresentFlag.REPLACE.value()), eq(DataCodings.newInstance((byte) 0)), eq((byte) 0), aryEq("short message body".getBytes())))
                 .andReturn("1");
 
         replay(session);
@@ -390,7 +382,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setBody(body);
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN),
                 eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1), (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
-                eq(ReplaceIfPresentFlag.DEFAULT.value()), not(eq(DataCoding.newInstance(incorrectDataCoding))), eq((byte) 0), aryEq(body)))
+                eq(ReplaceIfPresentFlag.DEFAULT.value()), not(eq(DataCodings.newInstance((byte)incorrectDataCoding))), eq((byte) 0), aryEq(body)))
                 .andReturn("1");
 
         replay(session);
@@ -424,7 +416,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(dataCoding)),
+                                          eq(DataCodings.newInstance((byte)dataCoding)),
                                           eq((byte) 0),
                                           aryEq(bodyNarrowed)))
             .andReturn("1");
@@ -460,7 +452,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(dataCoding)),
+                                          eq(DataCodings.newInstance((byte)dataCoding)),
                                           eq((byte) 0),
                                           aryEq(bodyNarrowed)))
             .andReturn("1");
@@ -495,7 +487,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(dataCoding)),
+                                          eq(DataCodings.newInstance((byte)dataCoding)),
                                           eq((byte) 0),
                                           aryEq(body)))
             .andReturn("1");
@@ -530,7 +522,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(dataCoding)),
+                                          eq(DataCodings.newInstance((byte)dataCoding)),
                                           eq((byte) 0),
                                           aryEq(body)))
             .andReturn("1");
@@ -566,7 +558,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(binDataCoding)),
+                                          eq(DataCodings.newInstance((byte)binDataCoding)),
                                           eq((byte) 0),
                                           aryEq(body)))
             .andReturn("1");
@@ -603,7 +595,7 @@ public class SmppSubmitSmCommandTest {
                                           (String) isNull(),
                                           eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)),
                                           eq(ReplaceIfPresentFlag.DEFAULT.value()),
-                                          eq(DataCoding.newInstance(latin1DataCoding)),
+                                          eq(DataCodings.newInstance((byte)latin1DataCoding)),
                                           eq((byte) 0),
                                           aryEq(bodyNarrowed)))
             .andReturn("1");

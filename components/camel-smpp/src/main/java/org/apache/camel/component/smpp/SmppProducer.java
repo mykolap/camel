@@ -16,9 +16,8 @@
  */
 package org.apache.camel.component.smpp;
 
-import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
-
+import org.apache.camel.AsyncCallback;
+import org.apache.camel.AsyncProcessor;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.impl.DefaultProducer;
@@ -31,15 +30,19 @@ import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.extra.SessionState;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.Session;
 import org.jsmpp.session.SessionStateListener;
 import org.jsmpp.util.DefaultComposer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * An implementation of @{link Producer} which use the SMPP protocol
  */
-public class SmppProducer extends DefaultProducer {
+public class SmppProducer extends DefaultProducer implements AsyncProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SmppProducer.class);
 
@@ -52,7 +55,7 @@ public class SmppProducer extends DefaultProducer {
         super(endpoint);
         this.configuration = config;
         this.internalSessionStateListener = new SessionStateListener() {
-            public void onStateChange(SessionState newState, SessionState oldState, Object source) {
+            public void onStateChange(SessionState newState, SessionState oldState, Session source) {
                 if (configuration.getSessionStateListener() != null) {
                     configuration.getSessionStateListener().onStateChange(newState, oldState, source);
                 }
@@ -85,6 +88,10 @@ public class SmppProducer extends DefaultProducer {
         LOG.debug("Connecting to: " + getEndpoint().getConnectionString() + "...");
         
         SMPPSession session = createSMPPSession();
+	    //By default in JSMPP value is 3, don't set less than default value
+        if (this.configuration.getPduProcessorDegree() > 3) {
+            session.setPduProcessorDegree(this.configuration.getPduProcessorDegree());
+        }
         session.setEnquireLinkTimer(this.configuration.getEnquireLinkTimer());
         session.setTransactionTimer(this.configuration.getTransactionTimer());
         session.addSessionStateListener(internalSessionStateListener);
@@ -147,6 +154,52 @@ public class SmppProducer extends DefaultProducer {
         
         SmppCommand command = getEndpoint().getBinding().createSmppCommand(session, exchange);
         command.execute(exchange);
+    }
+
+    public boolean process(Exchange exchange, AsyncCallback callback) {
+        LOG.trace("Process exchange: {} in an async way.", exchange);
+
+        try {
+
+            if (session == null) {
+                if (this.configuration.isLazySessionCreation()) {
+                    if (connectLock.tryLock()) {
+                        try {
+                            if (session == null) {
+                                // set the system id and password with which we will try to connect to the SMSC
+                                Message in = exchange.getIn();
+                                String systemId = in.getHeader(SmppConstants.SYSTEM_ID, String.class);
+                                String password = in.getHeader(SmppConstants.PASSWORD, String.class);
+                                if (systemId != null && password != null) {
+                                    log.info("using the system id '{}' to connect to the SMSC...", systemId);
+                                    this.configuration.setSystemId(systemId);
+                                    this.configuration.setPassword(password);
+                                }
+                                session = createSession();
+                            }
+                        } finally {
+                            connectLock.unlock();
+                        }
+                    }
+                }
+            }
+
+            // only possible by trying to reconnect
+            if (this.session == null) {
+                throw new IOException("Lost connection to " + getEndpoint().getConnectionString() + " and yet not reconnected");
+            }
+
+            SmppCommand command = getEndpoint().getBinding().createSmppCommand(session, exchange);
+            command.execute(exchange);
+
+        } catch (Throwable ex) {
+            // error occurred before we had a chance to go async
+            // so set exception and invoke callback true
+            exchange.setException(ex);
+        }
+
+        callback.done(false);
+        return false;
     }
 
     @Override

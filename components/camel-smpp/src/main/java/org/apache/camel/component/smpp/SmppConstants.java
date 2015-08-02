@@ -27,6 +27,7 @@ public interface SmppConstants {
     String COMMAND_ID = "CamelSmppCommandId";
     String COMMAND_STATUS = "CamelSmppCommandStatus";
     String DATA_CODING = "CamelSmppDataCoding";
+    String DECODED_TEXT = "CamelSmppDecodedText";
     String DELIVERED = "CamelSmppDelivered";
     String DEST_ADDR = "CamelSmppDestAddr";
     String DEST_ADDR_NPI = "CamelSmppDestAddrNpi";
@@ -61,6 +62,10 @@ public interface SmppConstants {
     String OPTIONAL_PARAMETERS = "CamelSmppOptionalParameters";
     String OPTIONAL_PARAMETER = "CamelSmppOptionalParameter";
     String SPLITTING_POLICY = "CamelSmppSplittingPolicy";
+
+    String UDHIE_MSG_REF_NUM = "CamelSmppMsgRefNum";
+    String UDHIE_TOTAl_SEGMENTS = "CamelSmppTotalSegments";
+    String UDHIE_SEGMENT_SEQNUM = "CamelSmppSegmentSeqnum";
 
     String UCS2_ENCODING = "UTF-16BE";
     byte UNKNOWN_ALPHABET = -1;

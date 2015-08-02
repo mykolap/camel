@@ -16,25 +16,16 @@
  */
 package org.apache.camel.component.smpp;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.camel.Exchange;
-import org.jsmpp.bean.AlertNotification;
-import org.jsmpp.bean.Alphabet;
-import org.jsmpp.bean.Command;
-import org.jsmpp.bean.DataSm;
-import org.jsmpp.bean.DeliverSm;
-import org.jsmpp.bean.DeliveryReceipt;
-import org.jsmpp.bean.OptionalParameter;
+import org.jsmpp.SMPPConstant;
+import org.jsmpp.bean.*;
 import org.jsmpp.bean.OptionalParameter.COctetString;
 import org.jsmpp.bean.OptionalParameter.Null;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.session.SMPPSession;
+
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 /**
  * A Strategy used to convert between a Camel {@link Exchange} and
@@ -97,6 +88,8 @@ public class SmppBinding {
             DeliveryReceipt smscDeliveryReceipt = deliverSm.getShortMessageAsDeliveryReceipt();
             smppMessage.setBody(smscDeliveryReceipt.getText());
 
+            smppMessage.setHeader(SmppConstants.DATA_CODING, deliverSm.getDataCoding());
+
             smppMessage.setHeader(SmppConstants.ID, smscDeliveryReceipt.getId());
             smppMessage.setHeader(SmppConstants.DELIVERED, smscDeliveryReceipt.getDelivered());
             smppMessage.setHeader(SmppConstants.DONE_DATE, smscDeliveryReceipt.getDoneDate());
@@ -105,28 +98,62 @@ public class SmppBinding {
             }
             smppMessage.setHeader(SmppConstants.SUBMIT_DATE, smscDeliveryReceipt.getSubmitDate());
             smppMessage.setHeader(SmppConstants.SUBMITTED, smscDeliveryReceipt.getSubmitted());
-            smppMessage.setHeader(SmppConstants.FINAL_STATUS, smscDeliveryReceipt.getFinalStatus());
+            smppMessage.setHeader(SmppConstants.FINAL_STATUS, smscDeliveryReceipt.getFinalStatus().toString());
 
-            if (deliverSm.getOptionalParametes() != null && deliverSm.getOptionalParametes().length > 0) {
-                // the deprecated way
-                Map<String, Object> optionalParameters = createOptionalParameterByName(deliverSm);
-                smppMessage.setHeader(SmppConstants.OPTIONAL_PARAMETERS, optionalParameters);
+            setSmppOptionalParameters(deliverSm, smppMessage);
 
-                // the new way
-                Map<Short, Object> optionalParameter = createOptionalParameterByCode(deliverSm);
-                smppMessage.setHeader(SmppConstants.OPTIONAL_PARAMETER, optionalParameter);
-            }
         } else {
             smppMessage.setHeader(SmppConstants.MESSAGE_TYPE, SmppMessageType.DeliverSm.toString());
 
             if (deliverSm.getShortMessage() != null) {
-                if (SmppUtils.parseAlphabetFromDataCoding(deliverSm.getDataCoding()) == Alphabet.ALPHA_8_BIT) {
-                    smppMessage.setBody(deliverSm.getShortMessage());
+
+                smppMessage.setBody(deliverSm.getShortMessage());
+
+                byte[] byteMessageBody = deliverSm.getShortMessage();
+                byte dataCoding = deliverSm.getDataCoding();
+
+                byte UDHIE_IDENTIFIER_SAR = 0x00;
+                byte UDHIE_SAR_LENGTH = 0x03;
+
+                byte[] textOfMessage;
+
+                if (byteMessageBody.length > 5
+                        && byteMessageBody[1] == UDHIE_IDENTIFIER_SAR
+                        && byteMessageBody[2] == UDHIE_SAR_LENGTH) {
+
+                    int udhiLength = byteMessageBody[0] + 1;
+
+                    short concatRef;
+                    byte tmpConcatRef = byteMessageBody[3];
+                    if (tmpConcatRef < 0) {
+                        concatRef = (short) (tmpConcatRef & 0xFF);
+                    } else {
+                        concatRef = tmpConcatRef;
+                    }
+
+                    smppMessage.setHeader(SmppConstants.UDHIE_MSG_REF_NUM, concatRef);
+                    smppMessage.setHeader(SmppConstants.UDHIE_TOTAl_SEGMENTS, byteMessageBody[4]);
+                    smppMessage.setHeader(SmppConstants.UDHIE_SEGMENT_SEQNUM, byteMessageBody[5]);
+
+                    textOfMessage = new byte[byteMessageBody.length-udhiLength];
+                    System.arraycopy(byteMessageBody, udhiLength, textOfMessage, 0, textOfMessage.length);
                 } else {
-                    smppMessage.setBody(String.valueOf(new String(deliverSm.getShortMessage(), configuration.getEncoding())));
+                    textOfMessage = byteMessageBody;
                 }
-            } else if (deliverSm.getOptionalParametes() != null && deliverSm.getOptionalParametes().length > 0) {
-                List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParametes());
+
+                String decodedMessage;
+                if (dataCoding == SMPPConstant.DC_UCS2
+                        || dataCoding == 25) {
+                    decodedMessage = new String(textOfMessage, SmppConstants.UCS2_ENCODING);
+                } else if (dataCoding == SMPPConstant.DC_BINARY) {
+                    decodedMessage = new String(textOfMessage);
+                } else {
+                    decodedMessage = GSM0338Charset.toUnicode(textOfMessage);
+                }
+                smppMessage.setHeader(SmppConstants.DECODED_TEXT, decodedMessage);
+
+            } else if (deliverSm.getOptionalParameters() != null && deliverSm.getOptionalParameters().length > 0) {
+                List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParameters());
 
                 for (OptionalParameter optPara : oplist) {
                     if (OptionalParameter.Tag.MESSAGE_PAYLOAD.code() == optPara.tag && OctetString.class.isInstance(optPara)) {
@@ -148,13 +175,31 @@ public class SmppBinding {
             smppMessage.setHeader(SmppConstants.SCHEDULE_DELIVERY_TIME, deliverSm.getScheduleDeliveryTime());
             smppMessage.setHeader(SmppConstants.VALIDITY_PERIOD, deliverSm.getValidityPeriod());
             smppMessage.setHeader(SmppConstants.SERVICE_TYPE, deliverSm.getServiceType());
+
+            setSmppOptionalParameters(deliverSm, smppMessage);
+
         }
 
         return smppMessage;
     }
 
+    private void setSmppOptionalParameters(DeliverSm deliverSm, SmppMessage smppMessage) {
+
+        if (deliverSm.getOptionalParameters() != null && deliverSm.getOptionalParameters().length > 0) {
+            // the deprecated way
+            Map<String, Object> optionalParameters = createOptionalParameterByName(deliverSm);
+            smppMessage.setHeader(SmppConstants.OPTIONAL_PARAMETERS, optionalParameters);
+
+            // the new way
+            Map<Short, Object> optionalParameter = createOptionalParameterByCode(deliverSm);
+            smppMessage.setHeader(SmppConstants.OPTIONAL_PARAMETER, optionalParameter);
+
+        }
+
+    }
+
     private Map<String, Object> createOptionalParameterByName(DeliverSm deliverSm) {
-        List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParametes());
+        List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParameters());
 
         Map<String, Object> optParams = new HashMap<String, Object>();
         for (OptionalParameter optPara : oplist) {
@@ -177,7 +222,7 @@ public class SmppBinding {
     }
 
     private Map<Short, Object> createOptionalParameterByCode(DeliverSm deliverSm) {
-        List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParametes());
+        List<OptionalParameter> oplist = Arrays.asList(deliverSm.getOptionalParameters());
 
         Map<Short, Object> optParams = new HashMap<Short, Object>();
         for (OptionalParameter optPara : oplist) {

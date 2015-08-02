@@ -30,15 +30,10 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
     // FIXME: these constants should be defined somewhere in jSMPP:
     public static final int SMPP_NEG_RESPONSE_MSG_TOO_LONG = 1;
 
-    protected Charset ascii = Charset.forName("US-ASCII");
-    protected Charset latin1 = Charset.forName("ISO-8859-1");
-    protected Charset defaultCharset;
-
     private final Logger logger = LoggerFactory.getLogger(SmppSmCommand.class);
 
     public SmppSmCommand(SMPPSession session, SmppConfiguration config) {
         super(session, config);
-        defaultCharset = Charset.forName(config.getEncoding());
     }
 
     protected byte[][] splitBody(Message message) throws SmppException {
@@ -78,19 +73,19 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
     protected SmppSplitter createSplitter(Message message) {
         Alphabet alphabet = determineAlphabet(message);
 
-        String body = message.getBody(String.class);
+        byte[] body = (byte[])message.getBody();
 
         SmppSplitter splitter;
         switch (alphabet) {
         case ALPHA_8_BIT:
-            splitter = new Smpp8BitSplitter(body.length());
+            splitter = new Smpp8BitSplitter(body.length);
             break;
         case ALPHA_UCS2:
-            splitter = new SmppUcs2Splitter(body.length());
+            splitter = new SmppUcs2Splitter(body.length/2);
             break;
         case ALPHA_DEFAULT:
         default:
-            splitter = new SmppDefaultSplitter(body.length());
+            splitter = new SmppDefaultSplitter(body.length);
             break;
         }
 
@@ -98,91 +93,30 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
     }
 
     protected final byte[] getShortMessage(Message message) {
-        if (has8bitDataCoding(message)) {
-            return message.getBody(byte[].class);
-        } else {
-            byte providedAlphabet = getProvidedAlphabet(message);
-            Alphabet determinedAlphabet = determineAlphabet(message);
-            Charset charset = determineCharset(message, providedAlphabet, determinedAlphabet.value());
-            String body = message.getBody(String.class);
-            return body.getBytes(charset);
-        }
-    }
-
-    private static boolean has8bitDataCoding(Message message) {
-        Byte dcs = message.getHeader(SmppConstants.DATA_CODING, Byte.class);
-        if (dcs != null) {
-            return SmppUtils.parseAlphabetFromDataCoding(dcs.byteValue()) == Alphabet.ALPHA_8_BIT;
-        } else {
-            Byte alphabet = message.getHeader(SmppConstants.ALPHABET, Byte.class);
-            return alphabet != null && alphabet.equals(Alphabet.ALPHA_8_BIT.value());
-        }
-    }
-
-    private byte getProvidedAlphabet(Message message) {
-        byte alphabet = config.getAlphabet();
-        if (message.getHeaders().containsKey(SmppConstants.ALPHABET)) {
-            alphabet = message.getHeader(SmppConstants.ALPHABET, Byte.class);
-        }
-
-        return alphabet;
-    }
-
-    private Charset getCharsetForMessage(Message message) {
-        if (message.getHeaders().containsKey(SmppConstants.ENCODING)) {
-            String encoding = message.getHeader(SmppConstants.ENCODING, String.class);
-            if (Charset.isSupported(encoding)) {
-                return Charset.forName(encoding);
-            } else {
-                logger.warn("Unsupported encoding \"{}\" requested in header.", encoding);
-            }
-        }
-        return null;
-    }
-
-    private Charset determineCharset(Message message, byte providedAlphabet, byte determinedAlphabet) {
-        Charset result = getCharsetForMessage(message);
-        if (result != null) {
-            return result;
-        }
-
-        if (providedAlphabet == Alphabet.ALPHA_UCS2.value() 
-            || (providedAlphabet == SmppConstants.UNKNOWN_ALPHABET && determinedAlphabet == Alphabet.ALPHA_UCS2.value())) {
-            // change charset to use multilang messages
-            return Charset.forName(SmppConstants.UCS2_ENCODING); 
-        }
-        
-        return defaultCharset;
+        return message.getBody(byte[].class);
     }
 
     private Alphabet determineAlphabet(Message message) {
-        String body = message.getBody(String.class);
-        byte alphabet = getProvidedAlphabet(message);
-        Charset charset = getCharsetForMessage(message);
-        if (charset == null) {
-            charset = defaultCharset;
-        }
-
-        Alphabet alphabetObj;
-        if (alphabet == SmppConstants.UNKNOWN_ALPHABET) {
-            alphabetObj = Alphabet.ALPHA_UCS2;
-            if (isLatin1Compatible(charset)) {
-                byte[] messageBytes = body.getBytes(charset);
-                if (SmppUtils.isGsm0338Encodeable(messageBytes)) {
-                    alphabetObj = Alphabet.ALPHA_DEFAULT;
-                }
-            }
+        if (message.getHeaders().containsKey(SmppConstants.DATA_CODING)) {
+            return Alphabet.parseDataCoding(message.getHeader(SmppConstants.DATA_CODING, Byte.class));
         } else {
-            alphabetObj = Alphabet.valueOf(alphabet);
+            byte alphabet = config.getAlphabet();
+            if (message.getHeaders().containsKey(SmppConstants.ALPHABET)) {
+                alphabet = message.getHeader(SmppConstants.ALPHABET, Byte.class);
+            }
+            Alphabet alphabetObj;
+            if (alphabet == SmppConstants.UNKNOWN_ALPHABET) {
+                String body = message.getBody(String.class);
+                if (GSM0338Charset.isGsmChars(body)) {
+                    alphabetObj = Alphabet.ALPHA_DEFAULT;
+                } else {
+                    alphabetObj = Alphabet.ALPHA_UCS2;
+                }
+            } else {
+                alphabetObj = Alphabet.valueOf(alphabet);
+            }
+            return alphabetObj;
         }
-
-        return alphabetObj;
     }
 
-    private boolean isLatin1Compatible(Charset c) {
-        if (c.equals(ascii) || c.equals(latin1)) {
-            return true;
-        }
-        return false;
-    }
 }

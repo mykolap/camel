@@ -89,20 +89,7 @@ public class SmppMessage extends DefaultMessage {
             if (shortMessage == null || shortMessage.length == 0) {
                 return null;
             }
-            if (SmppUtils.parseAlphabetFromDataCoding(msgRequest.getDataCoding()) == Alphabet.ALPHA_8_BIT) {
-                return shortMessage;
-            }
-            
-            String encoding = IOHelper.getCharsetName(getExchange(), false);
-            if (ObjectHelper.isEmpty(encoding) || !Charset.isSupported(encoding)) {
-                encoding = configuration.getEncoding();
-            }
-            try {
-                return new String(shortMessage, encoding);
-            } catch (UnsupportedEncodingException e) {
-                LOG.info("Unsupported encoding \"{}\". Using system default encoding.", encoding);
-            }
-            return new String(shortMessage);
+            return shortMessage;
         }
 
         return null;

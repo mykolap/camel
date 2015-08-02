@@ -65,23 +65,4 @@ public class SmppUtilsTest {
         assertEquals(0, calendar.get(Calendar.SECOND));
     }
     
-    @Test
-    public void parseAlphabetFromDataCoding() {
-        assertEquals(Alphabet.ALPHA_DEFAULT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x00));
-        assertEquals(Alphabet.ALPHA_DEFAULT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x01));
-        assertEquals(Alphabet.ALPHA_DEFAULT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x03));
-
-        assertEquals(Alphabet.ALPHA_8_BIT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x02));
-        assertEquals(Alphabet.ALPHA_8_BIT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x04));
-        assertEquals(Alphabet.ALPHA_8_BIT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x05));
-        assertEquals(Alphabet.ALPHA_8_BIT, SmppUtils.parseAlphabetFromDataCoding((byte) 0x07));
-
-        assertEquals(Alphabet.ALPHA_UCS2, SmppUtils.parseAlphabetFromDataCoding((byte) 0x08));
-        assertEquals(Alphabet.ALPHA_UCS2, SmppUtils.parseAlphabetFromDataCoding((byte) 0x09));
-        assertEquals(Alphabet.ALPHA_UCS2, SmppUtils.parseAlphabetFromDataCoding((byte) 0x0b));
-
-        assertEquals(Alphabet.ALPHA_RESERVED, SmppUtils.parseAlphabetFromDataCoding((byte) 0x0c));
-        assertEquals(Alphabet.ALPHA_RESERVED, SmppUtils.parseAlphabetFromDataCoding((byte) 0x0d));
-        assertEquals(Alphabet.ALPHA_RESERVED, SmppUtils.parseAlphabetFromDataCoding((byte) 0xff));
-    }
 }

@@ -23,16 +23,8 @@ import java.util.Map;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
-import org.jsmpp.bean.DataCoding;
-import org.jsmpp.bean.ESMClass;
-import org.jsmpp.bean.GSMSpecificFeature;
-import org.jsmpp.bean.MessageMode;
-import org.jsmpp.bean.MessageType;
-import org.jsmpp.bean.NumberingPlanIndicator;
-import org.jsmpp.bean.OptionalParameter;
-import org.jsmpp.bean.RegisteredDelivery;
-import org.jsmpp.bean.SubmitSm;
-import org.jsmpp.bean.TypeOfNumber;
+import org.jsmpp.bean.*;
+import org.jsmpp.bean.OptionalParameter.Tag;
 import org.jsmpp.session.SMPPSession;
 
 public class SmppSubmitSmCommand extends SmppSmCommand {
@@ -69,10 +61,10 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
                         submitSm.getValidityPeriod(),
                         new RegisteredDelivery(submitSm.getRegisteredDelivery()),
                         submitSm.getReplaceIfPresent(),
-                        DataCoding.newInstance(submitSm.getDataCoding()),
+                        DataCodings.newInstance(submitSm.getDataCoding()),
                         (byte) 0,
                         submitSm.getShortMessage(),
-                        submitSm.getOptionalParametes());
+                        submitSm.getOptionalParameters());
             } catch (Exception e) {
                 throw new SmppException(e);
             }
@@ -96,7 +88,9 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
         byte[][] segments = splitBody(exchange.getIn());
 
         // multipart message
-        if (segments.length > 1) {
+        // if UDHIE header is set or segment counts > 0 - set EsmClass with UDHI feature
+        if (segments.length > 1
+                || (exchange.getIn().getHeader(SmppConstants.UDHIE_MSG_REF_NUM) != null)) {
             template.setEsmClass(new ESMClass(MessageMode.DEFAULT, MessageType.DEFAULT, GSMSpecificFeature.UDHI).value());
         }
 
@@ -207,14 +201,14 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
         Map<java.lang.Short, Object> optinalParamater = in.getHeader(SmppConstants.OPTIONAL_PARAMETER, Map.class);
         if (optinalParamater != null) {
             List<OptionalParameter> optParams = createOptionalParametersByCode(optinalParamater);
-            submitSm.setOptionalParametes(optParams.toArray(new OptionalParameter[optParams.size()]));
+            submitSm.setOptionalParameters(optParams.toArray(new OptionalParameter[optParams.size()]));
         } else {
             Map<String, String> optinalParamaters = in.getHeader(SmppConstants.OPTIONAL_PARAMETERS, Map.class);
             if (optinalParamaters != null) {
                 List<OptionalParameter> optParams = createOptionalParametersByName(optinalParamaters);
-                submitSm.setOptionalParametes(optParams.toArray(new OptionalParameter[optParams.size()]));
+                submitSm.setOptionalParameters(optParams.toArray(new OptionalParameter[optParams.size()]));
             } else {
-                submitSm.setOptionalParametes();
+                submitSm.setOptionalParameters();
             }
         }
 

@@ -109,8 +109,9 @@ public class SmppConfiguration implements Cloneable {
     private SessionStateListener sessionStateListener;
     @UriParam(defaultValue = "ALLOW")
     private SmppSplittingPolicy splittingPolicy = SmppSplittingPolicy.ALLOW;
+    @UriParam(defaultValue = "3")
+    private Integer pduProcessorDegree = 3;
 
-    
     /**
      * A POJO which contains all necessary configuration parameters for the SMPP connection
      * 
@@ -635,6 +636,14 @@ public class SmppConfiguration implements Cloneable {
      */
     public void setSplittingPolicy(SmppSplittingPolicy splittingPolicy) {
         this.splittingPolicy = splittingPolicy;
+    }
+
+    public int getPduProcessorDegree() {
+        return pduProcessorDegree;
+    }
+
+    public void setPduProcessorDegree(int pduProcessorDegree) {
+        this.pduProcessorDegree = pduProcessorDegree;
     }
 
     @Override
