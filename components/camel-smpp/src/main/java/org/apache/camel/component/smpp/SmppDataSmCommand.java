@@ -72,7 +72,8 @@ public class SmppDataSmCommand extends AbstractSmppCommand {
 
         Message message = getResponseMessage(exchange);
         message.setHeader(SmppConstants.ID, result.getMessageId());
-        message.setHeader(SmppConstants.OPTIONAL_PARAMETERS, createOptionalParameterByName(result.getOptionalParameters()));
+        //message.setHeader(SmppConstants.OPTIONAL_PARAMETERS, createOptionalParameterByName(result.getOptionalParameters()));
+        message.setHeader(SmppConstants.OPTIONAL_PARAMETERS, null);
         message.setHeader(SmppConstants.OPTIONAL_PARAMETER, createOptionalParameterByCode(result.getOptionalParameters()));
     }
 
@@ -190,6 +191,7 @@ public class SmppDataSmCommand extends AbstractSmppCommand {
             dataSm.setRegisteredDelivery(config.getRegisteredDelivery());
         }
 
+        /*
         Map<java.lang.Short, Object> optinalParamater = in.getHeader(SmppConstants.OPTIONAL_PARAMETER, Map.class);
         if (optinalParamater != null) {
             List<OptionalParameter> optParams = createOptionalParametersByCode(optinalParamater);
@@ -203,6 +205,9 @@ public class SmppDataSmCommand extends AbstractSmppCommand {
                 dataSm.setOptionalParameters();
             }
         }
+        */
+        List<OptionalParameter> optParams = createOptionalParametersByHeaders(in.getHeaders());
+        dataSm.setOptionalParameters(optParams.toArray(new OptionalParameter[optParams.size()]));
 
         return dataSm;
     }

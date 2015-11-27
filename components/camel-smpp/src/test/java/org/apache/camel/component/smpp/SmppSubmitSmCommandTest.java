@@ -80,7 +80,7 @@ public class SmppSubmitSmCommandTest {
         Exchange exchange = new DefaultExchange(new DefaultCamelContext(), ExchangePattern.InOut);
         exchange.getIn().setHeader(SmppConstants.COMMAND, "SubmitSm");
         exchange.getIn().setHeader(SmppConstants.ID, "1");
-        exchange.getIn().setBody("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
+        exchange.getIn().setBody("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890".getBytes());
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
@@ -144,7 +144,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.COMMAND, "SubmitSm");
         exchange.getIn().setHeader(SmppConstants.ID, "1");
         exchange.getIn().setHeader(SmppConstants.SPLITTING_POLICY, "REJECT");
-        exchange.getIn().setBody("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901");
+        exchange.getIn().setBody("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901".getBytes());
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
@@ -177,7 +177,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.COMMAND, "SubmitSm");
         exchange.getIn().setHeader(SmppConstants.ID, "1");
         exchange.getIn().setHeader(SmppConstants.SPLITTING_POLICY, "TRUNCATE");
-        exchange.getIn().setBody("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901");
+        exchange.getIn().setBody("12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901".getBytes());
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1616"),
                 eq(TypeOfNumber.UNKNOWN), eq(NumberingPlanIndicator.UNKNOWN), eq("1717"), eq(new ESMClass()), eq((byte) 0), eq((byte) 1),
                 (String) isNull(), (String) isNull(), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE)), eq(ReplaceIfPresentFlag.DEFAULT.value()),
@@ -211,7 +211,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.PRIORITY_FLAG, (byte) 2);
         exchange.getIn().setHeader(SmppConstants.REGISTERED_DELIVERY, new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS).value());
         exchange.getIn().setHeader(SmppConstants.REPLACE_IF_PRESENT_FLAG, ReplaceIfPresentFlag.REPLACE.value());
-        exchange.getIn().setBody("short message body");
+        exchange.getIn().setBody(GSM0338Charset.toGSM("short message body"));
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("-300101003702200-"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
@@ -245,7 +245,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.PRIORITY_FLAG, (byte) 2);
         exchange.getIn().setHeader(SmppConstants.REGISTERED_DELIVERY, new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS).value());
         exchange.getIn().setHeader(SmppConstants.REPLACE_IF_PRESENT_FLAG, ReplaceIfPresentFlag.REPLACE.value());
-        exchange.getIn().setBody("short message body");
+        exchange.getIn().setBody("short message body".getBytes());
         Map<String, String> optionalParameters = new LinkedHashMap<String, String>();
         optionalParameters.put("SOURCE_SUBADDRESS", "1292");
         optionalParameters.put("ADDITIONAL_STATUS_INFO_TEXT", "urgent");
@@ -291,7 +291,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.PRIORITY_FLAG, (byte) 2);
         exchange.getIn().setHeader(SmppConstants.REGISTERED_DELIVERY, new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS).value());
         exchange.getIn().setHeader(SmppConstants.REPLACE_IF_PRESENT_FLAG, ReplaceIfPresentFlag.REPLACE.value());
-        exchange.getIn().setBody("short message body");
+        exchange.getIn().setBody("short message body".getBytes());
         Map<Short, Object> optionalParameters = new LinkedHashMap<Short, Object>();
         // standard optional parameter
         optionalParameters.put(Short.valueOf((short) 0x0202), "1292".getBytes("UTF-8"));
@@ -354,7 +354,7 @@ public class SmppSubmitSmCommandTest {
         exchange.getIn().setHeader(SmppConstants.PRIORITY_FLAG, (byte) 2);
         exchange.getIn().setHeader(SmppConstants.REGISTERED_DELIVERY, new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS).value());
         exchange.getIn().setHeader(SmppConstants.REPLACE_IF_PRESENT_FLAG, ReplaceIfPresentFlag.REPLACE.value());
-        exchange.getIn().setBody("short message body");
+        exchange.getIn().setBody("short message body".getBytes());
         expect(session.submitShortMessage(eq("CMT"), eq(TypeOfNumber.NATIONAL), eq(NumberingPlanIndicator.NATIONAL), eq("1818"),
                 eq(TypeOfNumber.INTERNATIONAL), eq(NumberingPlanIndicator.INTERNET), eq("1919"),
                 eq(new ESMClass()), eq((byte) 1), eq((byte) 2), eq("-300101001831100-"), eq("000003000000000R"), eq(new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS)),
@@ -437,7 +437,7 @@ public class SmppSubmitSmCommandTest {
         Exchange exchange = new DefaultExchange(new DefaultCamelContext(), ExchangePattern.InOut);
         exchange.getIn().setHeader(SmppConstants.COMMAND, "SubmitSm");
         exchange.getIn().setHeader(SmppConstants.DATA_CODING, dataCoding);
-        exchange.getIn().setBody(body);
+        exchange.getIn().setBody(new String(body).getBytes("ISO-8859-1"));
         expect(session.submitShortMessage(eq("CMT"),
                                           eq(TypeOfNumber.UNKNOWN),
                                           eq(NumberingPlanIndicator.UNKNOWN),

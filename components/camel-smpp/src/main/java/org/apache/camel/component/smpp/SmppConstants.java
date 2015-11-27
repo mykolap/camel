@@ -35,6 +35,7 @@ public interface SmppConstants {
     String DONE_DATE = "CamelSmppDoneDate";
     String ENCODING = "CamelSmppEncoding";
     String ERROR = "CamelSmppError";
+    String ESMClass = "CamelSmppESMClass";
     String ESME_ADDR = "CamelSmppEsmeAddr";
     String ESME_ADDR_NPI = "CamelSmppEsmeAddrNpi";
     String ESME_ADDR_TON = "CamelSmppEsmeAddrTon";
@@ -64,7 +65,7 @@ public interface SmppConstants {
     String SPLITTING_POLICY = "CamelSmppSplittingPolicy";
 
     String UDHIE_MSG_REF_NUM = "CamelSmppMsgRefNum";
-    String UDHIE_TOTAl_SEGMENTS = "CamelSmppTotalSegments";
+    String UDHIE_TOTAL_SEGMENTS = "CamelSmppTotalSegments";
     String UDHIE_SEGMENT_SEQNUM = "CamelSmppSegmentSeqnum";
 
     String UCS2_ENCODING = "UTF-16BE";

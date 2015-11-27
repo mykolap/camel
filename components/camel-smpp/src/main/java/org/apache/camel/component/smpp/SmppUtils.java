@@ -179,12 +179,6 @@ public final class SmppUtils {
         if (src.isDatagramMode()) {
             dest.setDatagramMode();
         }
-        if (src.isDefaultMessageType()) {
-            dest.setDefaultMessageType();
-        }
-        if (src.isDefaultMode()) {
-            dest.setDefaultMode();
-        }
         if (src.isEsmeDeliveryAcknowledgement()) {
             dest.setEsmeDelivertAcknowledgement();
         }
@@ -193,9 +187,6 @@ public final class SmppUtils {
         }
         if (src.isForwardMode()) {
             dest.setForwardMode();
-        }
-        if (src.isReplyPath()) {
-            dest.setReplyPath();
         }
         if (src.isSmscDelReceiptFailureRequested()) {
             dest.setSmscDelReceiptFailureRequested();
@@ -208,12 +199,6 @@ public final class SmppUtils {
         }
         if (src.isStoreAndForwardMode()) {
             dest.setStoreAndForwardMode();
-        }
-        if (src.isUdhi()) {
-            dest.setUdhi();
-        }
-        if (src.isUdhiAndReplyPath()) {
-            dest.setUdhiAndReplyPath();
         }
         return dest;
     }

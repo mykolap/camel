@@ -124,36 +124,43 @@ public class SmppProducer extends DefaultProducer implements AsyncProcessor {
     }
 
     public void process(Exchange exchange) throws Exception {
-        if (session == null) {
-            if (this.configuration.isLazySessionCreation()) {
-                if (connectLock.tryLock()) {
-                    try {
-                        if (session == null) {
-                            // set the system id and password with which we will try to connect to the SMSC
-                            Message in = exchange.getIn();
-                            String systemId = in.getHeader(SmppConstants.SYSTEM_ID, String.class);
-                            String password = in.getHeader(SmppConstants.PASSWORD, String.class);
-                            if (systemId != null && password != null) {
-                                log.info("using the system id '{}' to connect to the SMSC...", systemId);
-                                this.configuration.setSystemId(systemId);
-                                this.configuration.setPassword(password);
+
+        try {
+            if (session == null) {
+                if (this.configuration.isLazySessionCreation()) {
+                    if (connectLock.tryLock()) {
+                        try {
+                            if (session == null) {
+                                // set the system id and password with which we will try to connect to the SMSC
+                                Message in = exchange.getIn();
+                                String systemId = in.getHeader(SmppConstants.SYSTEM_ID, String.class);
+                                String password = in.getHeader(SmppConstants.PASSWORD, String.class);
+                                if (systemId != null && password != null) {
+                                    log.info("using the system id '{}' to connect to the SMSC...", systemId);
+                                    this.configuration.setSystemId(systemId);
+                                    this.configuration.setPassword(password);
+                                }
+                                session = createSession();
                             }
-                            session = createSession();
+                        } finally {
+                            connectLock.unlock();
                         }
-                    } finally {
-                        connectLock.unlock();
                     }
                 }
             }
+
+            // only possible by trying to reconnect
+            if (this.session == null) {
+                throw new IOException("Lost connection to " + getEndpoint().getConnectionString() + " and yet not reconnected");
+            }
+
+            SmppCommand command = getEndpoint().getBinding().createSmppCommand(session, exchange);
+            command.execute(exchange);
+
+        } catch (Exception exception) {
+            exchange.setException(exception);
         }
-        
-        // only possible by trying to reconnect 
-        if (this.session == null) {
-            throw new IOException("Lost connection to " + getEndpoint().getConnectionString() + " and yet not reconnected");
-        }
-        
-        SmppCommand command = getEndpoint().getBinding().createSmppCommand(session, exchange);
-        command.execute(exchange);
+
     }
 
     public boolean process(Exchange exchange, AsyncCallback callback) {
@@ -196,20 +203,29 @@ public class SmppProducer extends DefaultProducer implements AsyncProcessor {
             // error occurred before we had a chance to go async
             // so set exception and invoke callback true
             exchange.setException(ex);
+            //callback.done(true);
+            //return true;
         }
 
         callback.done(false);
         return false;
+
     }
 
     @Override
     protected void doStop() throws Exception {
         LOG.debug("Disconnecting from: " + getEndpoint().getConnectionString() + "...");
 
-        super.doStop();
-        closeSession();
+        for (int i = 0; i < 3; i++) {
+            try {
+                closeSession();
+            } catch (Exception e) {
+                LOG.warn("Could not close session " + session);
+            }
+        }
 
         LOG.info("Disconnected from: " + getEndpoint().getConnectionString());
+        super.doStop();
     }
     
     private void closeSession() {

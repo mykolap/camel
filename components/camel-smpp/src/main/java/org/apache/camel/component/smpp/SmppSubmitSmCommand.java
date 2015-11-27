@@ -36,17 +36,16 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
     @Override
     public void execute(Exchange exchange) throws SmppException {
         SubmitSm[] submitSms = createSubmitSm(exchange);
-        List<String> messageIDs = new ArrayList<String>(submitSms.length);
+        List<SubmitSmResp> messageIDs = new ArrayList<>(submitSms.length);
         
         for (int i = 0; i < submitSms.length; i++) {
             SubmitSm submitSm = submitSms[i];
-            String messageID;
             if (log.isDebugEnabled()) {
                 log.debug("Sending short message {} for exchange id '{}'...", i, exchange.getExchangeId());
             }
 
             try {
-                messageID = session.submitShortMessage(
+                SubmitSmResp resp = (SubmitSmResp) session.submitShortMessageCommand(
                         submitSm.getServiceType(),
                         TypeOfNumber.valueOf(submitSm.getSourceAddrTon()),
                         NumberingPlanIndicator.valueOf(submitSm.getSourceAddrNpi()),
@@ -65,11 +64,11 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
                         (byte) 0,
                         submitSm.getShortMessage(),
                         submitSm.getOptionalParameters());
+                messageIDs.add(resp);
             } catch (Exception e) {
                 throw new SmppException(e);
             }
 
-            messageIDs.add(messageID);
         }
 
         if (log.isDebugEnabled()) {
@@ -78,21 +77,22 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
         }
 
         Message message = getResponseMessage(exchange);
-        message.setHeader(SmppConstants.ID, messageIDs);
+        if (messageIDs.size() == 1) {
+            message.setHeader(SmppConstants.ID, messageIDs.get(0).getMessageId());
+            message.setHeader(SmppConstants.COMMAND_STATUS, messageIDs.get(0).getCommandStatus());
+            message.setHeader(SmppConstants.SEQUENCE_NUMBER, messageIDs.get(0).getSequenceNumber());
+            message.setHeader(SmppConstants.ESMClass, submitSms[0].getEsmClass());
+        } else {
+            message.setHeader(SmppConstants.ID, messageIDs);
+        }
         message.setHeader(SmppConstants.SENT_MESSAGE_COUNT, messageIDs.size());
     }
 
     protected SubmitSm[] createSubmitSm(Exchange exchange) throws SmppException {
 
-        SubmitSm template = createSubmitSmTemplate(exchange);
-        byte[][] segments = splitBody(exchange.getIn());
-
-        // multipart message
-        // if UDHIE header is set or segment counts > 0 - set EsmClass with UDHI feature
-        if (segments.length > 1
-                || (exchange.getIn().getHeader(SmppConstants.UDHIE_MSG_REF_NUM) != null)) {
-            template.setEsmClass(new ESMClass(MessageMode.DEFAULT, MessageType.DEFAULT, GSMSpecificFeature.UDHI).value());
-        }
+        Message messageIn = exchange.getIn();
+        byte[][] segments = splitBody(messageIn);
+        SubmitSm template = createSubmitSmTemplate(messageIn, segments.length);
 
         SubmitSm[] submitSms = new SubmitSm[segments.length];
         for (int i = 0; i < segments.length; i++) {
@@ -105,8 +105,8 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
     }
 
     @SuppressWarnings({"unchecked"})
-    protected SubmitSm createSubmitSmTemplate(Exchange exchange) {
-        Message in = exchange.getIn();
+    protected SubmitSm createSubmitSmTemplate(Message in, int messageParts) {
+
         SubmitSm submitSm = new SubmitSm();
 
         if (in.getHeaders().containsKey(SmppConstants.DATA_CODING)) {
@@ -196,8 +196,22 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
             submitSm.setReplaceIfPresent(config.getReplaceIfPresentFlag());
         }
 
-        submitSm.setEsmClass(new ESMClass().value());
+        if (in.getHeaders().containsKey(SmppConstants.ESMClass)) {
+            submitSm.setEsmClass(in.getHeader(SmppConstants.ESMClass, Byte.class));
+        } else {
+            // multipart message
+            // if UDHIE Total Segments header is set or segments counts > 0 - set EsmClass with UDHI feature
+            if (in.getHeaders().containsKey(SmppConstants.UDHIE_TOTAL_SEGMENTS)) {
+                messageParts = in.getHeader(SmppConstants.UDHIE_TOTAL_SEGMENTS, Byte.class).intValue();
+            }
+            if (messageParts > 1) {
+                submitSm.setEsmClass(new ESMClass(MessageMode.DEFAULT, MessageType.DEFAULT, GSMSpecificFeature.UDHI).value());
+            } else {
+                submitSm.setEsmClass(new ESMClass().value());
+            }
+        }
 
+        /*
         Map<java.lang.Short, Object> optinalParamater = in.getHeader(SmppConstants.OPTIONAL_PARAMETER, Map.class);
         if (optinalParamater != null) {
             List<OptionalParameter> optParams = createOptionalParametersByCode(optinalParamater);
@@ -211,6 +225,9 @@ public class SmppSubmitSmCommand extends SmppSmCommand {
                 submitSm.setOptionalParameters();
             }
         }
+        */
+        List<OptionalParameter> optParams = createOptionalParametersByHeaders(in.getHeaders());
+        submitSm.setOptionalParameters(optParams.toArray(new OptionalParameter[optParams.size()]));
 
         return submitSm;
     }

@@ -65,8 +65,10 @@ public class MessageReceiverListenerImpl implements MessageReceiverListener {
     public void onAcceptDeliverSm(DeliverSm deliverSm) throws ProcessRequestException {
         LOG.debug("Received a deliverSm {}", deliverSm);
 
+        MessageId newMessageId = messageIDGenerator.newMessageId();
         Exchange exchange;
         try {
+            deliverSm.setId(newMessageId.getValue());
             exchange = endpoint.createOnAcceptDeliverSmExchange(deliverSm);
         } catch (Exception e) {
             exceptionHandler.handleException("Cannot create exchange. This exception will be ignored.", e);

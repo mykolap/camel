@@ -71,9 +71,18 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
     }
 
     protected SmppSplitter createSplitter(Message message) {
-        Alphabet alphabet = determineAlphabet(message);
 
-        byte[] body = (byte[])message.getBody();
+        Object objectBody = message.getBody();
+        byte[] body;
+        if (objectBody == null) {
+            body = new byte[0];
+        } else if (objectBody instanceof String) {
+            body = ((String) objectBody).getBytes();
+        } else {
+            body = (byte[]) message.getBody();
+        }
+
+        Alphabet alphabet = determineAlphabet(message, body);
 
         SmppSplitter splitter;
         switch (alphabet) {
@@ -96,7 +105,7 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
         return message.getBody(byte[].class);
     }
 
-    private Alphabet determineAlphabet(Message message) {
+    private Alphabet determineAlphabet(Message message, byte[] body) {
         if (message.getHeaders().containsKey(SmppConstants.DATA_CODING)) {
             return Alphabet.parseDataCoding(message.getHeader(SmppConstants.DATA_CODING, Byte.class));
         } else {
@@ -106,8 +115,7 @@ public abstract class SmppSmCommand extends AbstractSmppCommand {
             }
             Alphabet alphabetObj;
             if (alphabet == SmppConstants.UNKNOWN_ALPHABET) {
-                String body = message.getBody(String.class);
-                if (GSM0338Charset.isGsmChars(body)) {
+                if (GSM0338Charset.isGsmChars(new String(body))) {
                     alphabetObj = Alphabet.ALPHA_DEFAULT;
                 } else {
                     alphabetObj = Alphabet.ALPHA_UCS2;

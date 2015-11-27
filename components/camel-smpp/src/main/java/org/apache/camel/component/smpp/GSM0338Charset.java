@@ -464,12 +464,15 @@ public class GSM0338Charset {
 
     public static boolean isGsmChars (String text) {
 
-        int len = text.length();
-        for (int i = 0; i < len; i++) {
-            char uch = text.charAt(i);
-            if (!UNICODE_TO_BYTE_MAP.containsKey(uch)) {
-                if (!UNICODE_TO_ESCAPED_BYTE.containsKey(uch)) {
-                    return false;
+        int len = 0;
+        if (text != null) {
+            len = text.length();
+            for (int i = 0; i < len; i++) {
+                char uch = text.charAt(i);
+                if (!UNICODE_TO_BYTE_MAP.containsKey(uch)) {
+                    if (!UNICODE_TO_ESCAPED_BYTE.containsKey(uch)) {
+                        return false;
+                    }
                 }
             }
         }

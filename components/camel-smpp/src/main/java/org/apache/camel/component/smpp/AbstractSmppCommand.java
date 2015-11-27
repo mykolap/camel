@@ -90,6 +90,60 @@ public abstract class AbstractSmppCommand implements SmppCommand {
         return optParams;
     }
 
+    protected List<OptionalParameter> createOptionalParametersByHeaders(Map<String, Object> allHeaders) {
+        List<OptionalParameter> optParams = new ArrayList<OptionalParameter>();
+
+        List<Tag> supportedTags = new ArrayList<>();
+        supportedTags.add(Tag.SC_INTERFACE_VERSION);
+        supportedTags.add(Tag.SOURCE_TELEMATICS_ID);
+        supportedTags.add(Tag.SAR_MSG_REF_NUM);
+        supportedTags.add(Tag.SAR_SEGMENT_SEQNUM);
+        supportedTags.add(Tag.SAR_TOTAL_SEGMENTS);
+        supportedTags.add(Tag.USSD_SERVICE_OP);
+        supportedTags.add(Tag.MTS_SERVICE_ID);
+        supportedTags.add(Tag.MTS_TRANSACTION_ID);
+        supportedTags.add(Tag.RECEIPTED_MESSAGE_ID);
+        supportedTags.add(Tag.MESSAGE_STATE);
+        supportedTags.add(Tag.ADDITIONAL_STATUS_INFO_TEXT);
+
+        Object value;
+        for (Tag currentTag : supportedTags) {
+            short key = currentTag.code();
+            value = allHeaders.get(currentTag.name());
+            if (value != null) {
+                try {
+                    switch (currentTag) {
+                        case SC_INTERFACE_VERSION:
+                        case SAR_SEGMENT_SEQNUM:
+                        case SAR_TOTAL_SEGMENTS:
+                        case USSD_SERVICE_OP:
+                        case MESSAGE_STATE:
+                            optParams.add(new OptionalParameter.Byte(key, (Byte) value));
+                            break;
+                        case MTS_SERVICE_ID:
+                            optParams.add(new OptionalParameter.OctetString(key, (String) value));
+                            break;
+                        case MTS_TRANSACTION_ID:
+                        case SOURCE_TELEMATICS_ID:
+                        case RECEIPTED_MESSAGE_ID:
+                        case ADDITIONAL_STATUS_INFO_TEXT:
+                            optParams.add(new OptionalParameter.COctetString(key, (String) value));
+                            break;
+                        case SAR_MSG_REF_NUM:
+                            optParams.add(new OptionalParameter.Short(key, (Short) value));
+                            break;
+                        default:
+                            log.info("Couldn't determine optional parameter for value {} (type: {}). Skip this one.", value, value.getClass());
+                            continue;
+                    }
+                } catch (Exception e) {
+                    log.info("Couldn't determine optional parameter for key {} and value {}. Skip this one.", key, value);
+                }
+            }
+        }
+        return optParams;
+    }
+
     /**
      * @deprecated will be removed in Camel 2.13.0/3.0.0 - use createOptionalParametersByCode instead
      * @param optinalParamaters
